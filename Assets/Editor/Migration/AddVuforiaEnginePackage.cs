@@ -8,10 +8,11 @@ using UnityEngine;
 [InitializeOnLoad]
 public class AddVuforiaEnginePackage
 {
-    const string VUFORIA_VERSION = "8.6.10";
+    const string VUFORIA_VERSION = "9.0.12";
     const string PACKAGE_KEY = "\"com.ptc.vuforia.engine\"";
 
-    static readonly string sManifestJsonPath = Path.Combine(Application.dataPath, "..", "Packages", "manifest.json");
+    static readonly string sPackagesPath = Path.Combine(Application.dataPath, "..", "Packages");
+    static readonly string sManifestJsonPath = Path.Combine(sPackagesPath, "manifest.json");
 
 
     static readonly ScopedRegistry sVuforiaRegistry = new ScopedRegistry()

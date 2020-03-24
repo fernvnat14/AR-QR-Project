@@ -6,12 +6,16 @@ Copyright (c) 2012-2015 Qualcomm Connected Experiences, Inc. All Rights Reserved
 Vuforia is a trademark of PTC Inc., registered in the United States and other 
 countries.
 ==============================================================================*/
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.UI;
 using Vuforia;
 
 /// <summary>
 /// This MonoBehaviour implements the Cloud Reco Event handling for this sample.
-/// It registers itself at the CloudRecoBehaviour and is notified of new search results as well as error messages
+/// It registers itself at the CloudRecoBehaviour and is notifiedf of new search results as well as error messages
 /// The current state is visualized and new results are enabled using the TargetFinder API.
 /// </summary>
 public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
@@ -20,10 +24,24 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
     CloudRecoBehaviour m_CloudRecoBehaviour;
     ObjectTracker m_ObjectTracker;
     TargetFinder m_TargetFinder;
-    public TMPro.TextMeshProUGUI name;
+
+    //target information
+    public TMPro.TextMeshProUGUI targetName;
+    public TMPro.TextMeshProUGUI targetStatus;
+    public TMPro.TextMeshProUGUI targetFacebook;
+    public TMPro.TextMeshProUGUI targetIg;
+    public TMPro.TextMeshProUGUI targetTwitter;
+    string targetID;
+
+    //animation
+    public Animator target_Animator;
+    public Animator targetAR_Animator;
+    public Animator FBAR_Animator;
+    public Animator IGAR_Animator;
+    public Animator TwitAR_Animator;
+    public Animator FlowerAR_Animator;
+
     #endregion // PRIVATE_MEMBERS
-
-
     #region PUBLIC_MEMBERS
     /// <summary>
     /// Can be set in the Unity inspector to reference a ImageTargetBehaviour 
@@ -34,8 +52,22 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
     public ImageTargetBehaviour m_ImageTargetBehaviour;
     public UnityEngine.UI.Image m_CloudActivityIcon;
     public UnityEngine.UI.Image m_CloudIdleIcon;
+
+    readonly string getURL = "http://35.239.78.55:8080/api/v1/viewall/";
     #endregion // PUBLIC_MEMBERS
 
+    public class TargetInfo
+    {
+        public string Firstname;
+        public string Lastname;
+        public string Username;
+        public string Password;
+        public string Twitter;
+        public string FB;
+        public string IG;
+        public string QR_ID;
+        public string caption;
+    }
 
     #region MONOBEHAVIOUR_METHODS
     /// <summary>
@@ -120,18 +152,18 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
     /// <param name="targetSearchResult"></param>
     public void OnNewSearchResult(TargetFinder.TargetSearchResult targetSearchResult)
     {           
-        Debug.Log("<color=blue>OnNewSearchResult(): </color>" + targetSearchResult.TargetName);
-                
+        Debug.Log("<color=blue>OnNewSearchResult(): </color>" + targetSearchResult.TargetName);     
         TargetFinder.CloudRecoSearchResult cloudRecoResult = (TargetFinder.CloudRecoSearchResult)targetSearchResult;
+        targetID = cloudRecoResult.UniqueTargetId;
+        StartCoroutine(RunAnimations());
 
         // This code demonstrates how to reuse an ImageTargetBehaviour for new search results
         // and modifying it according to the metadata. Depending on your application, it can
         // make more sense to duplicate the ImageTargetBehaviour using Instantiate() or to
         // create a new ImageTargetBehaviour for each new result. Vuforia will return a new
         // object with the right script automatically if you use:
-        // TargetFinder.EnableTracking(TargetSearchResult result, string gameObjectName)
+        // TargetFinder.EnableTracking(TargetSearchResult result, string gameObjectName
 
-        name.text = "UniqueTargetId: " + cloudRecoResult.UniqueTargetId + "\n" +  "TargetName: " + cloudRecoResult.TargetName + "\n" + "TrackingRating: " + cloudRecoResult.TrackingRating;
         Debug.Log("MetaData: " + cloudRecoResult.MetaData);
         Debug.Log("TargetName: " + cloudRecoResult.TargetName);
         Debug.Log("Pointer: " + cloudRecoResult.TargetSearchResultPtr);
@@ -163,4 +195,80 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
         m_CloudActivityIcon.enabled = visible; */
     }
     #endregion // PRIVATE_METHODS
+
+    public void CancelTargetButton()
+    {
+        //target_animation
+        target_Animator.SetBool("TargetDetected", false);
+        target_Animator.SetBool("CancelButton", true);
+        /*targetAR_Animator.SetBool("TargetFound", false);
+        targetAR_Animator.SetBool("TargetLost", true);
+        FBAR_Animator.SetBool("TargetFound", false);
+        FBAR_Animator.SetBool("Cancel", true);
+        IGAR_Animator.SetBool("TargetFound", false);
+        IGAR_Animator.SetBool("Cancel", true);
+        TwitAR_Animator.SetBool("TargetFound", false);
+        TwitAR_Animator.SetBool("Cancel", true);
+        FlowerAR_Animator.SetBool("TargetFound", false);
+        FlowerAR_Animator.SetBool("Cancel", true);*/
+    }
+
+    IEnumerator RunAnimations()
+    {
+        targetAR_Animator.SetBool("TargetFound", true);
+        targetAR_Animator.SetBool("TargetLost", false);
+        FBAR_Animator.SetBool("TargetFound", true);
+        FBAR_Animator.SetBool("Cancel", false);
+        IGAR_Animator.SetBool("TargetFound", true);
+        IGAR_Animator.SetBool("Cancel", false);
+        TwitAR_Animator.SetBool("TargetFound", true);
+        TwitAR_Animator.SetBool("Cancel", false);
+        FlowerAR_Animator.SetBool("TargetFound", true);
+        FlowerAR_Animator.SetBool("Cancel", false);
+
+        yield return new WaitForSeconds(2);
+
+        targetAR_Animator.SetBool("TargetFound", false);
+        targetAR_Animator.SetBool("TargetLost", true);
+        FBAR_Animator.SetBool("TargetFound", false);
+        FBAR_Animator.SetBool("Cancel", true);
+        IGAR_Animator.SetBool("TargetFound", false);
+        IGAR_Animator.SetBool("Cancel", true);
+        TwitAR_Animator.SetBool("TargetFound", false);
+        TwitAR_Animator.SetBool("Cancel", true);
+        FlowerAR_Animator.SetBool("TargetFound", false);
+        FlowerAR_Animator.SetBool("Cancel", true);
+        StartCoroutine(getTargetData());
+
+    }
+
+    IEnumerator getTargetData()
+    {
+
+        TargetInfo myObject = new TargetInfo();
+        UnityWebRequest www = UnityWebRequest.Get(getURL + "/qr/" + targetID);
+
+        yield return www.SendWebRequest();
+
+        if (www.isNetworkError || www.isHttpError)
+        {
+            Debug.LogError(www.error);
+        }
+        else
+        {
+            Debug.Log(www.downloadHandler.text);
+            myObject = JsonUtility.FromJson<TargetInfo>(www.downloadHandler.text);
+
+            //target info
+            targetName.text = myObject.Firstname + '\n' + myObject.Lastname;
+            targetStatus.text = myObject.caption;
+            targetFacebook.text = myObject.FB;
+            targetIg.text = myObject.IG;
+            targetTwitter.text = myObject.Twitter;
+
+            //target_animation
+            target_Animator.SetBool("TargetDetected", true);
+            target_Animator.SetBool("CancelButton", false);
+        }
+    }
 }
