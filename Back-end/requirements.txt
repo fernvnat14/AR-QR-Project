@@ -6,4 +6,4 @@ Flask-JWT-Extended==3.24.1
 Flask-MySQL==1.5.1
 Flask-RESTful==0.3.8
 passlib==1.7.2
-requests==2.12.4
+requests==2.20.0
