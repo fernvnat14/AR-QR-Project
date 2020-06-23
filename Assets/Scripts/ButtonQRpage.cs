@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class ButtonQRpage : MonoBehaviour
@@ -27,9 +28,9 @@ public class ButtonQRpage : MonoBehaviour
     public RawImage Rimage;
 
     //api
-    readonly string getURL = "http://35.239.78.55:8080/api/v1/viewall/";
+    readonly string getURL = "https://unityproject-270307.uc.r.appspot.com/api/v1/viewall/";
     readonly string getQRURL = "http://api.qrserver.com/v1/create-qr-code";
-    readonly string postURL = "http://35.239.78.55:8080/api/v1/editCaption/";
+    readonly string postURL = "https://unityproject-270307.uc.r.appspot.com/api/v1/editCaption/";
 
     //json temp
     public class UserInfo
@@ -68,6 +69,11 @@ public class ButtonQRpage : MonoBehaviour
         edit_Animator.SetBool("Finishededit", false);
     }
 
+    public void MyProduct()
+    {
+        SceneManager.LoadScene("MYPRODUCT-PAGE");
+    }
+
     public void PostEdit()
     {
         StartCoroutine(EditStatus());
@@ -75,7 +81,9 @@ public class ButtonQRpage : MonoBehaviour
 
     public void InfoButton()
     {
-        StartCoroutine(QRcodeGenerator());
+        //StartCoroutine(QRcodeGenerator());
+        user_Animator.SetBool("CancelButton", false);
+        user_Animator.SetBool("InformationButton", true);
     }
 
     public void CancelInfoButton()
@@ -114,10 +122,7 @@ public class ButtonQRpage : MonoBehaviour
             }
             else
             {
-
-                Debug.Log(www.downloadHandler.text);
                 myObject = JsonUtility.FromJson<UserInfo>(www.downloadHandler.text);
-                Debug.Log(myObject);
                 //user info
                 userName.text = myObject.Firstname + '\n' + myObject.Lastname;
                 userStatus.text = myObject.caption;
@@ -149,7 +154,6 @@ public class ButtonQRpage : MonoBehaviour
         {
             texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
             Rimage.texture = texture;
-            Debug.Log(www.downloadHandler.text);
             StartCoroutine(getUserData());
         }
     }
@@ -167,10 +171,7 @@ public class ButtonQRpage : MonoBehaviour
         }
         else
         {
-
-            Debug.Log(www.downloadHandler.text);
             myObject = JsonUtility.FromJson<UserInfo>(www.downloadHandler.text);
-            Debug.Log(myObject);
             //user info
             userName.text = myObject.Firstname + '\n' + myObject.Lastname;
             userStatus.text = myObject.caption;

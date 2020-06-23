@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a06010d524b9b4ddfa662eac457e2e4c, type: 3}
+  m_Name: VuforiaToolsConfiguration
+  m_EditorClassIdentifier: 
+  accessKey: d21d7aee3c5a84650b8f159ecf2b7543a2a32176
+  secretKey: efced3b8868db29b876fa8993682eab979b24c82
+  wideMode: 0
+  accountSummary:
+    result_code: 
+    transaction_id: 
+    name: 
+    active_images: 0
+    inactive_images: 0
+    failed_images: 0
+  targetSummaryList: []

@@ -8,8 +8,11 @@ countries.
 ==============================================================================*/
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
+using SimpleJSON;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Vuforia;
 
@@ -25,21 +28,115 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
     ObjectTracker m_ObjectTracker;
     TargetFinder m_TargetFinder;
 
+    [TextArea]
+    public string jsonData;
+    ArrayList TempleArray;
+    public JSONNode jsonNode;
+
+    //slider
+    public UnityEngine.UI.Image carbs_bar;
+    public UnityEngine.UI.Image cholesterol_bar;
+    public UnityEngine.UI.Image fat_bar;
+    public UnityEngine.UI.Image sodium_bar;
+
+    public UnityEngine.UI.Image seemore_carbs_bar;
+    public UnityEngine.UI.Image seemore_cholesterol_bar;
+    public UnityEngine.UI.Image seemore_fat_bar;
+    public UnityEngine.UI.Image seemore_sodium_bar;
+    public UnityEngine.UI.Image seemore_protein_bar;
+    public UnityEngine.UI.Image seemore_sugar_bar;
+
+    public TMPro.TextMeshProUGUI detectText;
+
+    //private
+    private string admin_username = "admin";
+    private string admin_password = "12345";
+
     //target information
-    public TMPro.TextMeshProUGUI targetName;
-    public TMPro.TextMeshProUGUI targetStatus;
-    public TMPro.TextMeshProUGUI targetFacebook;
-    public TMPro.TextMeshProUGUI targetIg;
-    public TMPro.TextMeshProUGUI targetTwitter;
+    public TMPro.TextMeshProUGUI calories;
+    public TMPro.TextMeshProUGUI carbs;
+    public TMPro.TextMeshProUGUI fat;
+    public TMPro.TextMeshProUGUI cholesterol;
+    public TMPro.TextMeshProUGUI sodium;
+    public TMPro.TextMeshProUGUI product_name;
+    public TMPro.TextMeshProUGUI owner;
+
+    public TMPro.TextMeshProUGUI seemoreowner;
+    public TMPro.TextMeshProUGUI seemoreproductname;
+    public TMPro.TextMeshProUGUI seemorecalories;
+    public TMPro.TextMeshProUGUI seemorecarbs;
+    public TMPro.TextMeshProUGUI seemorefat;
+    public TMPro.TextMeshProUGUI seemoreprotein;
+    public TMPro.TextMeshProUGUI seemoresugar;
+    public TMPro.TextMeshProUGUI seemoresodium;
+    public TMPro.TextMeshProUGUI seemorecholesterol;
+
+    //new UI
+    public TMPro.TextMeshProUGUI per_fat;
+    public TMPro.TextMeshProUGUI per_sodium;
+    public TMPro.TextMeshProUGUI per_cholesterol;
+    public TMPro.TextMeshProUGUI per_carbs;
+
+    public TMPro.TextMeshProUGUI seemore_per_fat;
+    public TMPro.TextMeshProUGUI seemore_per_sodium;
+    public TMPro.TextMeshProUGUI seemore_per_cholesterol;
+    public TMPro.TextMeshProUGUI seemore_per_carbs;
+
     string targetID;
 
+    //toAddProduct
+    public float toadd_sugars;
+    public float toadd_sodium;
+    public float toadd_cholesterol;
+    public float toadd_calories;
+    public float toadd_carbs;
+    public float toadd_fat;
+    public float toadd_protein;
+    public string toadd_product_name;
+    public string toadd_product_id;
+    public string toadd_username;
+
+    //gameObject
+    public GameObject seeMore;
+    public GameObject seeLessTarget;
+    public GameObject seeLess;
+    public GameObject onProduct;
+    public GameObject productDetail;
+    public GameObject loginRequired;
+
     //animation
-    public Animator target_Animator;
+    public Animator windows_Animator;
     public Animator targetAR_Animator;
-    public Animator FBAR_Animator;
-    public Animator IGAR_Animator;
-    public Animator TwitAR_Animator;
-    public Animator FlowerAR_Animator;
+
+    //func
+    public DailyIntake script_DailyIntake;
+    public RefreshToken refreshToken;
+
+    bool seeMoreBool = false;
+
+    //
+    public float dv_fat;
+    public float dv_sodium;
+    public float dv_cholesterol;
+    public float dv_carbs;
+    public float value_calories;
+    public float value_fat;
+    public float value_sodium;
+    public float value_cholesterol;
+    public float value_carbs;
+    public float value_sugar;
+    public float value_protein;
+    public string value_product_id;
+    public string value_product_name;
+    public string value_product_owner;
+
+    //iTween
+    public iTween.EaseType easeType;
+    public iTween.LoopType loopType;
+
+    public UnityEngine.UI.Image statusImage;
+    public Sprite red;
+    public Sprite green;
 
     #endregion // PRIVATE_MEMBERS
     #region PUBLIC_MEMBERS
@@ -53,20 +150,16 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
     public UnityEngine.UI.Image m_CloudActivityIcon;
     public UnityEngine.UI.Image m_CloudIdleIcon;
 
-    readonly string getURL = "http://35.239.78.55:8080/api/v1/viewall/";
+    readonly string getURL = "https://unityproject-270307.uc.r.appspot.com/api/v1/product";
+    readonly string dailyIntakeURL = "https://unityproject-270307.uc.r.appspot.com/api/v1/daily-intake";
     #endregion // PUBLIC_MEMBERS
 
-    public class TargetInfo
+    string authenticate(string username, string password)
     {
-        public string Firstname;
-        public string Lastname;
-        public string Username;
-        public string Password;
-        public string Twitter;
-        public string FB;
-        public string IG;
-        public string QR_ID;
-        public string caption;
+        string auth = username + ":" + password;
+        auth = System.Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(auth));
+        auth = "Basic " + auth;
+        return auth;
     }
 
     #region MONOBEHAVIOUR_METHODS
@@ -75,18 +168,26 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
     /// </summary>
     void Start()
     {
+        fat_bar.fillAmount = 0;
+        sodium_bar.fillAmount = 0;
+        cholesterol_bar.fillAmount = 0;
+        carbs_bar.fillAmount = 0;
+
+        seemore_fat_bar.fillAmount = 0;
+        seemore_sodium_bar.fillAmount = 0;
+        seemore_cholesterol_bar.fillAmount = 0;
+        seemore_carbs_bar.fillAmount = 0;
+        seemore_protein_bar.fillAmount = 0;
+        seemore_sugar_bar.fillAmount = 0;
+
         // Register this event handler at the CloudRecoBehaviour
         m_CloudRecoBehaviour = GetComponent<CloudRecoBehaviour>();
         if (m_CloudRecoBehaviour)
         {
             m_CloudRecoBehaviour.RegisterEventHandler(this);
         }
-
-        /*
-        if (m_CloudActivityIcon)
-        {
-            m_CloudActivityIcon.enabled = false;
-        } */
+        detectText.text = "No Product Detected";
+        statusImage.sprite = red;
     }
 
     void Update()
@@ -94,6 +195,21 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
         if (m_CloudRecoBehaviour.CloudRecoInitialized && m_TargetFinder != null)
         {
             SetCloudActivityIconVisible(m_TargetFinder.IsRequesting());
+        }
+
+        if (m_ImageTargetBehaviour.CurrentStatusInfo.ToString() == "UNKNOWN")
+        {
+            detectText.text = "No Product Detected";
+            seeLessTarget.transform.position = new Vector3(2000, 0, 0);
+            statusImage.sprite = red;
+            //seeLessTarget.SetActive(false);
+        }
+
+        else if (m_ImageTargetBehaviour.CurrentStatusInfo.ToString() == "NORMAL" && !seeMoreBool)
+        {
+            detectText.text = "Product Detected";
+            statusImage.sprite = green;
+            //seeLessTarget.SetActive(true);
         }
 
         /*
@@ -152,11 +268,14 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
     /// <param name="targetSearchResult"></param>
     public void OnNewSearchResult(TargetFinder.TargetSearchResult targetSearchResult)
     {           
-        Debug.Log("<color=blue>OnNewSearchResult(): </color>" + targetSearchResult.TargetName);     
+        Debug.Log("<color=blue>OnNewSearchResult(): </color>" + targetSearchResult.TargetName);
+        detectText.text = "Product Detected";
+        statusImage.sprite = green;
         TargetFinder.CloudRecoSearchResult cloudRecoResult = (TargetFinder.CloudRecoSearchResult)targetSearchResult;
         targetID = cloudRecoResult.UniqueTargetId;
-        StartCoroutine(RunAnimations());
+        StartCoroutine(getTargetData());
 
+        // StartCoroutine(RunAnimations());
         // This code demonstrates how to reuse an ImageTargetBehaviour for new search results
         // and modifying it according to the metadata. Depending on your application, it can
         // make more sense to duplicate the ImageTargetBehaviour using Instantiate() or to
@@ -164,11 +283,11 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
         // object with the right script automatically if you use:
         // TargetFinder.EnableTracking(TargetSearchResult result, string gameObjectName
 
-        Debug.Log("MetaData: " + cloudRecoResult.MetaData);
+        /*("MetaData: " + cloudRecoResult.MetaData);
         Debug.Log("TargetName: " + cloudRecoResult.TargetName);
         Debug.Log("Pointer: " + cloudRecoResult.TargetSearchResultPtr);
         Debug.Log("TrackingRating: " + cloudRecoResult.TrackingRating);
-        Debug.Log("UniqueTargetId: " + cloudRecoResult.UniqueTargetId);
+        Debug.Log("UniqueTargetId: " + cloudRecoResult.UniqueTargetId);*/
 
         // Changing CloudRecoBehaviour.CloudRecoEnabled to false will call TargetFinder.Stop()
         // and also call all registered ICloudRecoEventHandler.OnStateChanged() with false.
@@ -196,79 +315,246 @@ public class CloudRecoEventHandler : MonoBehaviour, IObjectRecoEventHandler
     }
     #endregion // PRIVATE_METHODS
 
+    public void SeeMoreButton()
+    {
+        StartCoroutine(SeeMore());
+    }
+
+    IEnumerator SeeMore()
+    {
+        seeLessTarget.SetActive(true);
+        yield return new WaitForEndOfFrame();
+        /*seeMoreBool = true;
+        seeLessTarget.SetActive(false);
+        seeMore.SetActive(true);*/
+
+        seemorecalories.text = value_calories.ToString("F0") + " Calories";
+        seemorecarbs.text = value_carbs.ToString("F2") + "g";
+        seemorefat.text = value_fat.ToString("F2") + "g";
+        seemoreprotein.text = value_protein.ToString("F2") + "g";
+        seemoresugar.text = value_sugar.ToString("F2") + "g";
+        seemoresodium.text = value_sodium.ToString("F2") + "g";
+        seemorecholesterol.text = value_cholesterol.ToString("F2") + "g";
+
+        seemore_fat_bar.fillAmount = dv_fat / 100;
+        seemore_sodium_bar.fillAmount = dv_sodium / 100;
+        seemore_cholesterol_bar.fillAmount = dv_cholesterol / 100;
+        seemore_carbs_bar.fillAmount = dv_carbs / 100;
+        seemore_protein_bar.fillAmount = 0;
+        seemore_sugar_bar.fillAmount = 0;
+
+        if (dv_fat >= 15)
+        {
+            seemore_fat_bar.color = Color.red;
+        }
+
+        if (dv_carbs >= 15)
+        {
+            seemore_carbs_bar.color = Color.red;
+        }
+
+        if (dv_cholesterol >= 15)
+        {
+            seemore_cholesterol_bar.color = Color.red;
+        }
+
+        if (dv_sodium >= 15)
+        {
+            seemore_sodium_bar.color = Color.red;
+        }
+
+        iTween.MoveTo(seeMore, iTween.Hash("y", Screen.height / 2, "time", 1f, "easetype", easeType, "Looptype", loopType));
+    }
+
+    public void SeeLessButton()
+    {
+        StartCoroutine(SeeLess());
+    }
+
+    IEnumerator SeeLess()
+    {
+        yield return new WaitForEndOfFrame();
+        seeMoreBool = false;
+        seeLessTarget.SetActive(true);
+        iTween.MoveTo(seeMore, iTween.Hash("y", -(Screen.height / 2), "time", 1f, "easetype", easeType, "Looptype", loopType));
+    }
+
+    public void ProductDetail()
+    {
+        productDetail.SetActive(true);
+    }
+
     public void CancelTargetButton()
     {
-        //target_animation
-        target_Animator.SetBool("TargetDetected", false);
-        target_Animator.SetBool("CancelButton", true);
-        /*targetAR_Animator.SetBool("TargetFound", false);
-        targetAR_Animator.SetBool("TargetLost", true);
-        FBAR_Animator.SetBool("TargetFound", false);
-        FBAR_Animator.SetBool("Cancel", true);
-        IGAR_Animator.SetBool("TargetFound", false);
-        IGAR_Animator.SetBool("Cancel", true);
-        TwitAR_Animator.SetBool("TargetFound", false);
-        TwitAR_Animator.SetBool("Cancel", true);
-        FlowerAR_Animator.SetBool("TargetFound", false);
-        FlowerAR_Animator.SetBool("Cancel", true);*/
+   
     }
 
     IEnumerator RunAnimations()
     {
-        targetAR_Animator.SetBool("TargetFound", true);
-        targetAR_Animator.SetBool("TargetLost", false);
-        FBAR_Animator.SetBool("TargetFound", true);
-        FBAR_Animator.SetBool("Cancel", false);
-        IGAR_Animator.SetBool("TargetFound", true);
-        IGAR_Animator.SetBool("Cancel", false);
-        TwitAR_Animator.SetBool("TargetFound", true);
-        TwitAR_Animator.SetBool("Cancel", false);
-        FlowerAR_Animator.SetBool("TargetFound", true);
-        FlowerAR_Animator.SetBool("Cancel", false);
-
-        yield return new WaitForSeconds(2);
-
-        targetAR_Animator.SetBool("TargetFound", false);
-        targetAR_Animator.SetBool("TargetLost", true);
-        FBAR_Animator.SetBool("TargetFound", false);
-        FBAR_Animator.SetBool("Cancel", true);
-        IGAR_Animator.SetBool("TargetFound", false);
-        IGAR_Animator.SetBool("Cancel", true);
-        TwitAR_Animator.SetBool("TargetFound", false);
-        TwitAR_Animator.SetBool("Cancel", true);
-        FlowerAR_Animator.SetBool("TargetFound", false);
-        FlowerAR_Animator.SetBool("Cancel", true);
-        StartCoroutine(getTargetData());
-
+        seeLessTarget.SetActive(true);
+        yield return new WaitForSeconds(1);
+        onProduct.SetActive(true);
     }
 
     IEnumerator getTargetData()
     {
-
-        TargetInfo myObject = new TargetInfo();
-        UnityWebRequest www = UnityWebRequest.Get(getURL + "/qr/" + targetID);
-
+        UnityWebRequest www = UnityWebRequest.Get(getURL + "?product_id=" + targetID);
+        www.SetRequestHeader("AUTHORIZATION", LoginPage.adminAuthStatic);
         yield return www.SendWebRequest();
 
         if (www.isNetworkError || www.isHttpError)
         {
             Debug.LogError(www.error);
+            refreshToken.ToCallRefreshToken(LoginPage.adminAuthRefreshStatic, "admin");
+            StartCoroutine(getTargetData());
         }
         else
         {
-            Debug.Log(www.downloadHandler.text);
-            myObject = JsonUtility.FromJson<TargetInfo>(www.downloadHandler.text);
+            seeLessTarget.SetActive(true);
+            yield return new WaitForEndOfFrame();
 
-            //target info
-            targetName.text = myObject.Firstname + '\n' + myObject.Lastname;
-            targetStatus.text = myObject.caption;
-            targetFacebook.text = myObject.FB;
-            targetIg.text = myObject.IG;
-            targetTwitter.text = myObject.Twitter;
+            jsonData = www.downloadHandler.text;
+            jsonNode = SimpleJSON.JSON.Parse(jsonData);
 
-            //target_animation
-            target_Animator.SetBool("TargetDetected", true);
-            target_Animator.SetBool("CancelButton", false);
+            dv_fat = jsonNode["fat"]["dv"];
+            dv_sodium = jsonNode["sodium"]["dv"];
+            dv_cholesterol = jsonNode["cholesterol"]["dv"];
+            dv_carbs = jsonNode["carbs"]["dv"];
+
+            value_calories = jsonNode["calories"];
+            value_fat = jsonNode["fat"]["value"];
+            value_sodium = jsonNode["sodium"]["value"];
+            value_cholesterol = jsonNode["cholesterol"]["value"];
+            value_carbs = jsonNode["carbs"]["value"];
+            value_sugar = jsonNode["sugars"];
+            value_protein = jsonNode["protein"];
+
+            value_product_id = jsonNode["product_id"];
+            value_product_name = jsonNode["product_name"];
+            value_product_owner = jsonNode["username"];
+
+            calories.text = value_calories.ToString("F2") + " Calories";
+            carbs.text = value_carbs.ToString("F2") + "g";
+            fat.text = value_fat.ToString("F2") + "g";
+            sodium.text = value_sodium.ToString("F2") + "g";
+            cholesterol.text = value_cholesterol.ToString("F2") + "g";
+            product_name.text = value_product_name;
+            owner.text = "by " + value_product_owner;
+
+            toadd_calories = value_calories;
+            toadd_protein = value_protein;
+            toadd_fat = value_fat;
+            toadd_carbs = value_carbs;
+            toadd_sugars = value_sugar;
+            toadd_sodium = value_sodium;
+            toadd_cholesterol = value_cholesterol;
+            toadd_product_id = targetID;
+            toadd_username = LoginPage.usernameStatic;
+
+            per_carbs.text = dv_carbs.ToString("F0") + "%";
+            per_cholesterol.text = dv_cholesterol.ToString("F0") + "%";
+            per_fat.text = dv_fat.ToString("F0") + "%";
+            per_sodium.text = dv_sodium.ToString("F0") + "%";
+
+            seemore_per_carbs.text = dv_carbs.ToString("F0") + "%";
+            seemore_per_cholesterol.text = dv_cholesterol.ToString("F0") + "%";
+            seemore_per_fat.text = dv_fat.ToString("F0") + "%";
+            seemore_per_sodium.text = dv_sodium.ToString("F0") + "%";
+            seemoreowner.text = "by " + value_product_owner;
+            seemoreproductname.text = value_product_name;
+
+            fat_bar.fillAmount = dv_fat / 100;
+            sodium_bar.fillAmount = dv_sodium / 100;
+            cholesterol_bar.fillAmount = dv_cholesterol / 100;
+            carbs_bar.fillAmount = dv_carbs / 100;
+
+            if (dv_fat >= 15)
+            {
+                fat_bar.color = Color.red;
+            }
+
+            if (dv_carbs >= 15)
+            {
+                carbs_bar.color = Color.red;
+            }
+
+            if (dv_cholesterol >= 15)
+            {
+                cholesterol_bar.color = Color.red;
+            }
+
+            if (dv_sodium >= 15)
+            {
+                sodium_bar.color = Color.red;
+            }
+
+        }
+    }
+
+    public class ToAddProduct
+    {
+        public float sugars;
+        public float sodium;
+        public float cholesterol;
+        public float calories;
+        public float carbs;
+        public float fat;
+        public float protein;
+        public string product_id;
+        public string username;
+    }
+
+    public void addToDailyIntakeButton()
+    {
+        if (LoginPage.usernameStatic == "Annonymous")
+        {
+            loginRequired.SetActive(true);
+        }
+        else
+        {
+            StartCoroutine(addToDailyIntake());
+        }
+    }
+
+    IEnumerator addToDailyIntake()
+    {
+        ToAddProduct toAddJson = new ToAddProduct();
+        toAddJson.calories = toadd_calories;
+        toAddJson.protein = toadd_protein;
+        toAddJson.fat = toadd_fat;
+        toAddJson.carbs = toadd_carbs;
+        toAddJson.sugars = toadd_sugars;
+        toAddJson.sodium = toadd_sodium;
+        toAddJson.cholesterol = toadd_cholesterol;
+        toAddJson.product_id = toadd_product_id;
+        toAddJson.username = toadd_username;
+
+        string json = JsonUtility.ToJson(toAddJson);
+
+        var request = new UnityWebRequest(dailyIntakeURL, "POST");
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+        request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.SetRequestHeader("Authorization", LoginPage.authStatic);
+        yield return request.SendWebRequest();
+
+        if (request.responseCode == 201)
+        {
+            seeMoreBool = false;
+            seeLessTarget.SetActive(true);
+            iTween.MoveTo(seeMore, iTween.Hash("y", -(Screen.height / 2), "time", 1f, "easetype", easeType, "Looptype", loopType));
+            yield return new WaitForSeconds(1);
+            script_DailyIntake.InfoButton();
+        }
+        else if (request.responseCode == 401)
+        {
+            refreshToken.ToCallRefreshToken(LoginPage.authRefreshStatic, "user");
+            StartCoroutine(addToDailyIntake());
+        }
+        else
+        {
+            SceneManager.GetActiveScene();
         }
     }
 }
