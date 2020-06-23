@@ -26,12 +26,12 @@ app = Flask(__name__)
 mysql = MySQL()
 CORS(app)
 
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = '12123'
-app.config['MYSQL_DATABASE_DB'] = 'arnutrition'
-app.config['MYSQL_DATABASE_HOST'] = '35.223.187.119'
+app.config['MYSQL_DATABASE_USER'] = 'XXXX' # Change this!
+app.config['MYSQL_DATABASE_PASSWORD'] = 'XXXX' # Change this!
+app.config['MYSQL_DATABASE_DB'] = 'XXXX' # Change this!
+app.config['MYSQL_DATABASE_HOST'] = 'XXXX' # Change this!
 
-app.config['JWT_SECRET_KEY'] = '8cda692c-20bb-452b-a762-4d341ea6c591'  # Change this!
+app.config['JWT_SECRET_KEY'] = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'  # Change this!
 
 jwt = JWTManager(app)
 mysql.init_app(app)
